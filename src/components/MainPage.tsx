@@ -1,13 +1,10 @@
-// import SearchSynonyms from "./SearchSynonyms";
-
+import { useGetSimilarTo } from "../hooks/useGetSimilarTo";
 import Header from "./Header";
-import { getSimilarTo } from "../services/api";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 
 export default function MainPage() {
-  const [wordToSearch, setWordToSearch] = useState("big");
-  const [loading, setLoading] = useState(false);
-  const [synonyms, setSynonyms] = useState<string[]>([]);
+  const [word, setWordToSearch] = useState("big");
+  const { loading, data } = useGetSimilarTo(word);
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -19,26 +16,6 @@ export default function MainPage() {
     setWordToSearch(word);
   }
 
-  useEffect(() => {
-    if (wordToSearch) {
-      setLoading(true);
-      getSimilarTo(wordToSearch)
-        .then((response) => {
-          console.log(
-            "🚀 ~ file: MainPage.tsx:23 ~ .then ~ response:",
-            response
-          );
-
-          setSynonyms(response.similarTo);
-          setLoading(false);
-        })
-        .catch((error) => {
-          console.error("Ocorreu um erro na busca", error);
-          setLoading(false);
-        });
-    }
-  }, [wordToSearch]);
-
   return (
     <div>
       <Header />
@@ -48,7 +25,7 @@ export default function MainPage() {
           <input
             type="text"
             name="word"
-            value={wordToSearch}
+            value={word}
             onChange={(e) => setWordToSearch(e.target.value)}
             placeholder="Digite uma palavra para fazer a busca por sinônimos"
           />
@@ -61,7 +38,10 @@ export default function MainPage() {
         <table>
           <thead>
             <tr>
-              <th> Tabela de Sinônimos</th>
+              <th>
+                {" "}
+                <h2>Tabela de Sinônimos</h2>
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -71,10 +51,10 @@ export default function MainPage() {
                 <td>Carregando...</td>{" "}
               </tr>
             ) : (
-              synonyms.map((synonym, index) => (
+              data.map((item, index: number) => (
                 <tr key={index}>
                   {" "}
-                  <td>{synonym}</td>{" "}
+                  <td>{item}</td>{" "}
                 </tr>
               ))
             )}
