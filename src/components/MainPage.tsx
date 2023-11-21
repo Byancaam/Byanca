@@ -1,8 +1,21 @@
+import { QueryClient, QueryClientProvider } from "react-query";
+import _debounce from "lodash/debounce";
 import { useGetSimilarTo } from "../hooks/useGetSimilarTo";
 import Header from "./Header";
 import React, { useState } from "react";
+import { Form, Input, Table, Button } from "antd";
+
+const queryClient = new QueryClient();
 
 export default function MainPage() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <MainPageContent />
+    </QueryClientProvider>
+  );
+}
+
+function MainPageContent() {
   const [word, setWordToSearch] = useState("big");
   const { loading, data } = useGetSimilarTo(word);
 
@@ -16,50 +29,53 @@ export default function MainPage() {
     setWordToSearch(word);
   }
 
+  const handleDebouncedChange = _debounce((newWord) => {
+    setWordToSearch(newWord);
+  }, 500);
+
+  const handleInputChange = (e: { target: { value: unknown } }) => {
+    const newWord = e.target.value;
+    handleDebouncedChange(newWord);
+  };
+
+  const columns = [
+    {
+      title: "Sinônimos",
+      dataIndex: "synonym",
+      key: "synonym",
+    },
+  ];
+
   return (
     <div>
       <Header />
-      <form onSubmit={handleSubmit}>
-        <label>
-          Search:{" "}
-          <input
+      <Form onFinish={handleSubmit}>
+        <Form.Item label="Search" name="word">
+          <Input
             type="text"
             name="word"
             value={word}
-            onChange={(e) => setWordToSearch(e.target.value)}
-            placeholder="Digite uma palavra para fazer a busca por sinônimos"
+            onChange={handleInputChange}
+            placeholder="Type a word to search for synonyms ..."
           />
-        </label>
-
-        <button type="submit">Pesquisar</button>
-      </form>
+        </Form.Item>
+        <Form.Item>
+          <Button type="primary" htmlType="submit">
+            Pesquisar
+          </Button>
+        </Form.Item>
+      </Form>
 
       <div>
-        <table>
-          <thead>
-            <tr>
-              <th>
-                {" "}
-                <h2>Tabela de Sinônimos</h2>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr>
-                {" "}
-                <td>Carregando...</td>{" "}
-              </tr>
-            ) : (
-              data.map((item, index: number) => (
-                <tr key={index}>
-                  {" "}
-                  <td>{item}</td>{" "}
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+        <Table
+          dataSource={data.map((item: unknown, index: unknown) => ({
+            key: index,
+            synonym: item,
+          }))}
+          columns={columns}
+          loading={loading}
+          pagination={false}
+        />
       </div>
     </div>
   );
